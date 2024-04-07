@@ -1,0 +1,136 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#app {
+  height: 100%;
+  line-height: 1;
+  font-size: 28px;
+  color: var(--van-text-color);
+  background-color: var(--van-bg-color);
+
+  .van-cell .van-badge__wrapper.van-field__clear {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+  }
+
+  .ant-empty {
+    font-size: 28px;
+    .ant-empty-image {
+      height: 80px;
+    }
+  }
+
+  .ant-table {
+    line-height: 1;
+    font-size: 28px;
+    .ant-table-tbody > tr.ant-table-row:hover > td,
+    .ant-table-tbody > tr > td.ant-table-cell-row-hover {
+      background: none;
+    }
+    .ant-table-tbody > tr.ant-table-row:hover > td.ant-table-cell-fix-left,
+    .ant-table-tbody > tr > td.ant-table-cell-row-hover.ant-table-cell-fix-left {
+      background: #fff;
+    }
+  }
+
+  .ant-table-selection-column {
+    padding: 8px;
+  }
+
+  .ant-checkbox-inner {
+    width: 32px;
+    height: 32px;
+    &::after {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .ant-checkbox-indeterminate .ant-checkbox-inner::after {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ant-table-pagination.ant-pagination {
+    margin: 0;
+    padding: 16px;
+    align-items: center;
+    .ant-pagination-item,
+    .ant-pagination-prev,
+    .ant-pagination-next,
+    .ant-pagination-jump-prev,
+    .ant-pagination-jump-next {
+      min-width: 48px;
+      height: 48px;
+      line-height: 44px;
+      font-size: 20px;
+      margin-right: 10px;
+      font-size: 24px;
+      & > a {
+        width: 100%;
+        height: 100%;
+      }
+      .ant-pagination-item-ellipsis {
+        font-size: 10px;
+      }
+      .anticon-left,
+      .anticon-right,
+      .anticon-double-left,
+      .anticon-double-right {
+        svg {
+          width: 18px;
+          height: 18px;
+        }
+      }
+    }
+    .ant-pagination-prev,
+    .ant-pagination-next {
+      .ant-pagination-item-link {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    }
+    .ant-pagination-jump-prev,
+    .ant-pagination-jump-next {
+      .ant-pagination-item-link .ant-pagination-item-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        .ant-pagination-item-ellipsis {
+          font-family: sans-serif;
+        }
+      }
+    }
+    .ant-pagination-next {
+      margin-right: 0;
+    }
+    .ant-pagination-total-text {
+      margin-right: 16px;
+      font-size: 24px;
+    }
+  }
+}
+
+.link,
+a {
+  color: var(--van-blue);
+}
