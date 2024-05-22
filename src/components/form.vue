@@ -291,7 +291,7 @@ import { isBoolean, isFunction } from '@/utils/is.js'
 
 const { startLoading, stopLoading } = useLoading()
 
-const emit = defineEmits(['onSubmit', 'inputClick'])
+const emit = defineEmits(['onSubmit', 'inputClick', 'selectChange'])
 
 const props = withDefaults(
   defineProps<{
@@ -414,6 +414,7 @@ const selectConfirm = ({ selectedOptions, item, index }: any) => {
 
     setVal(name, setText ? 'text' : 'value')
     setVal(`${name}_select_text`, 'text')
+    emit('selectChange', formData.value[name])
   }
   pickerList.value[index] = false
 }
@@ -611,6 +612,8 @@ watch(
             obj[v.name] = val[v.name]
             if ((v.redirection ?? '') !== '') {
               obj[v.redirection] = val[v.redirection]
+            } else if (v.type === 'radio') {
+              obj[`${v.name}_selected`] = val[v.name]
             }
             v.value = val[v.name]
           } else {
