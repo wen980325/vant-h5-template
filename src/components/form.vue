@@ -25,7 +25,13 @@
               @click="inputClick(item, index)"
             >
               <template #label v-if="props.labelConfig">
+                <slot name="label" v-bind="item"></slot>
+              </template>
+              <template #input v-if="item.showInputSlot">
                 <slot name="input" v-bind="item"></slot>
+              </template>
+              <template #right-icon v-if="item.showRightIconSlot">
+                <slot name="rightIcon" v-bind="item"></slot>
               </template>
               <template #extra>
                 <slot name="inputExtra" v-bind="{ formData, item }"></slot>
@@ -160,6 +166,24 @@
                   <van-time-picker v-model="item.value[1]" />
                 </van-picker-group>
               </template>
+
+              <template v-else-if="item.type === 'cascader'">
+                <van-cascader
+                  v-model="item.value"
+                  :title="item.label"
+                  :options="item.columns"
+                  :field-names="item.columnsFieldNames"
+                  @finish="
+                    ({ selectedOptions }) =>
+                      selectConfirm({
+                        selectedOptions,
+                        item,
+                        index,
+                      })
+                  "
+                  @close="pickerList[index] = false"
+                />
+              </template>
             </van-popup>
           </template>
 
@@ -242,11 +266,11 @@
                 <div class="otherInput">
                   <template v-if="item.type === 'img'">
                     <ImgList
-                      ref="imgList"
+                      :ref="(el: any) => setRefMap(el, item.name)"
                       deletable
                       showUpload
-                      :imgStr="formData.imgStr"
-                      :maxCount="props.maxCount"
+                      :imgStr="formData[item.name]"
+                      :maxCount="item.maxCount || 9"
                     />
                   </template>
                   <template v-else-if="item.type === 'other'">
@@ -284,10 +308,10 @@
 import dayjs from 'dayjs'
 import api from '@/api/common'
 import { showFailToast, showConfirmDialog } from 'vant'
-import { cloneDeep } from 'lodash'
+import { cloneDeep, merge } from 'lodash'
 import { useLoading } from '@/hooks'
 import { compressorImage } from '@/utils/compressor'
-import { isBoolean, isFunction } from '@/utils/is.js'
+import { isBoolean, isFunction, isString } from '@/utils/is.js'
 
 const { startLoading, stopLoading } = useLoading()
 
@@ -302,12 +326,12 @@ const props = withDefaults(
     labelWidth?: string
     title?: string
     button?: string
-    maxCount?: number
     loading?: boolean
     showToast?: boolean
     showBtn?: boolean
     showLoading?: boolean
     labelConfig?: boolean
+    uploadImg?: boolean
     toastMessage?: string
   }>(),
   {
@@ -318,18 +342,18 @@ const props = withDefaults(
     labelWidth: '2rem',
     title: '',
     button: '提交',
-    maxCount: 9,
     loading: false,
     showToast: false,
     showBtn: true,
     showLoading: true,
     labelConfig: false,
+    uploadImg: true,
     toastMessage: '确认提交吗？',
   }
 )
 
 const formRef = ref()
-const imgList = ref()
+const imgObj = ref<any>({})
 const btnLoading = ref(false)
 const searchData = ref<any>('')
 const listData = ref<any>([])
@@ -339,12 +363,18 @@ const showColumns = ref<any>({})
 const formData = ref<any>({})
 const btnsObj = ref<any>({})
 const inputType = reactive(['input', 'number', 'digit', 'textarea', 'password'])
-const readonlyType = reactive(['select', 'date', 'rangeTime', 'rangeDate', 'time'])
+const readonlyType = reactive(['select', 'date', 'rangeTime', 'rangeDate', 'time', 'cascader'])
 const otherType = reactive(['img', 'other'])
 const defaultDate = reactive({
   minDate: dayjs().subtract(2, 'year').startOf('year').toDate(),
   maxDate: dayjs().add(1, 'year').endOf('year').toDate(),
 })
+
+const setRefMap = (el: any, k: number) => {
+  if (el) {
+    imgObj.value[k] = el
+  }
+}
 
 // 判断是否需要展示
 const isShow = (val: any) => {
@@ -470,52 +500,77 @@ const setData = async () => {
     btnLoading.value = true
     if (props.showLoading) startLoading()
 
-    let files = imgList.value ? imgList.value[0]?.getFiles() ?? [] : [],
-      promiseArr: any = [],
-      filesArr: any = []
+    let files: any = imgObj.value ? Object.keys(imgObj.value) : [],
+      filesList: any = [],
+      filesObj: any = {},
+      promiseArr: any = []
 
     if (files.length > 0) {
-      files.map((v: any, k: number) => {
-        promiseArr[k] = new Promise(async (resolve: any, reject: any) => {
-          if (v.file) {
-            try {
-              let file: any = await compressorImage(v.file, 'file', 0.3),
-                form = new FormData()
-              form.append('file', file)
-              let res = await api.commonUploadImage(form)
-              filesArr.push(res.data)
-              resolve()
-            } catch {
-              reject()
-            }
-          } else if (v.resetStr) {
-            filesArr.push(v.resetStr)
-            resolve()
-          } else {
-            resolve()
-          }
+      files.map((v: any) => {
+        let arr = imgObj.value[v]?.getFiles() || []
+        arr.map((i: any) => {
+          filesList.push({ name: v, value: i })
         })
       })
+      if (filesList.length > 0) {
+        filesList.map(({ name, value }: any, k: number) => {
+          if (!filesObj[name]) {
+            filesObj[name] = []
+          }
+          promiseArr[k] = new Promise(async (resolve: any, reject: any) => {
+            if (value.file) {
+              try {
+                let file: any = await compressorImage(value.file, 'file', 0.3)
+                if (props.uploadImg) {
+                  let form = new FormData()
+                  form.append('file', file)
+                  let res = await api.commonUploadImage(form)
+                  filesObj[name].push(res.data)
+                  resolve()
+                } else {
+                  filesObj[name].push(file)
+                  resolve()
+                }
+              } catch {
+                reject()
+              }
+            } else if (value.resetStr) {
+              filesObj[name].push(value.resetStr)
+              resolve()
+            } else {
+              resolve()
+            }
+          })
+        })
+      }
     }
 
     Promise.all([...promiseArr])
       .then(() => {
-        let imgStr = filesArr.join('?'),
-          form = formData.value
+        let form = merge({}, formData.value)
 
         if (btnsObj.value && Object.keys(btnsObj.value).length > 0) {
           form = { ...form, btnsObj: btnsObj.value }
         }
 
-        if (imgList.value) {
-          form = { ...form, imgStr }
+        if (filesList.length > 0) {
+          let obj: any = {}
+          Object.keys(filesObj).map((v: any) => {
+            if (filesObj[v].every((i: any) => isString(i))) {
+              obj[v] = filesObj[v].join('?')
+            } else {
+              obj[v] = filesObj[v]
+            }
+          })
+          form = { ...form, ...obj }
         }
 
         emit('onSubmit', form)
       })
       .catch(() => {
         showFailToast('上传图片文件太大，请重新选取')
-      }).finally(() => {
+      })
+      .finally(() => {
         btnLoading.value = false
       })
   }
