@@ -59,29 +59,34 @@
             </van-field>
             <van-popup v-model:show="pickerList[index]" position="bottom">
               <template v-if="item.type === 'select'">
-                <van-picker
-                  :columns="selectColumns(item, showColumns[item.name])"
-                  :columns-field-names="item.columnsFieldNames"
-                  @confirm="
-                    ({ selectedOptions }) =>
-                      selectConfirm({
-                        selectedOptions,
-                        item,
-                        index,
-                      })
-                  "
-                  @cancel="pickerList[index] = false"
-                >
-                  <template #title>
-                    <van-search
-                      class="w-[60%]"
-                      v-model="searchData"
-                      placeholder="请输入搜索关键词"
-                      @update:model-value="(val) => searchChange(val, item)"
-                      @clear="() => (showColumns[item.name] = cloneDeep(item.columns))"
-                    />
-                  </template>
-                </van-picker>
+                <template v-if="showColumns[item.name] && showColumns[item.name].length > 0">
+                  <van-picker
+                    :columns="selectColumns(item, showColumns[item.name])"
+                    :columns-field-names="item.columnsFieldNames"
+                    @confirm="
+                      ({ selectedOptions }) =>
+                        selectConfirm({
+                          selectedOptions,
+                          item,
+                          index,
+                        })
+                    "
+                    @cancel="pickerList[index] = false"
+                  >
+                    <template #title>
+                      <van-search
+                        class="w-[60%]"
+                        v-model="searchData"
+                        placeholder="请输入搜索关键词"
+                        @update:model-value="(val) => searchChange(val, item)"
+                        @clear="() => (showColumns[item.name] = cloneDeep(item.columns))"
+                      />
+                    </template>
+                  </van-picker>
+                </template>
+                <template v-else>
+                  <Empty />
+                </template>
               </template>
 
               <template v-else-if="item.type === 'date'">
